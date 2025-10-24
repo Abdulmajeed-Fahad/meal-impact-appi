@@ -78,7 +78,7 @@ export default function MealAnalysis({ meal, lang, onClose, isMuted }: MealAnaly
 
   const healthIndexStyle = getHealthIndexColor(meal.colorIndex)
 
-  const handleShowAdvice = () => {
+  const handleShowSearch = () => {
     playSound("click", isMuted)
     setShowQR(!showQR)
   }
@@ -87,11 +87,6 @@ export default function MealAnalysis({ meal, lang, onClose, isMuted }: MealAnaly
     playSound("success", isMuted)
     window.location.href = "/"
   }
-
-  const qrContent =
-    lang === "ar"
-      ? `${meal.nameAr}\n\nالأضرار المحتملة:\n${meal.healthImpactAr}\n\nبديل صحي:\n${meal.alternativeAr}`
-      : `${meal.nameEn}\n\nPotential Harms:\n${meal.healthImpactEn}\n\nHealthy Alternative:\n${meal.alternativeEn}`
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50" onClick={onClose}>
@@ -102,81 +97,59 @@ export default function MealAnalysis({ meal, lang, onClose, isMuted }: MealAnaly
         <div className="p-8 space-y-8">
           {/* Header */}
           <div className="text-center">
-            <h2 className="text-4xl font-bold text-gray-900 mb-2">{lang === "ar" ? meal.nameAr : meal.nameEn}</h2>
+            <h2 className="text-4xl font-bold text-gray-900 mb-2">
+              {lang === "ar" ? meal.nameAr : meal.nameEn}
+            </h2>
           </div>
 
-          {/* Nutrition Facts with Progress Bars */}
+          {/* Nutrition Facts */}
           <div className="space-y-4">
             <h3 className="text-2xl font-bold text-gray-900 text-right">
               {lang === "ar" ? "القيم الغذائية" : "Nutritional Values"}
             </h3>
 
-            {/* Fats */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-700">{lang === "ar" ? "الدهون" : "Fats"}</span>
-                <span className="text-lg font-bold text-gray-900">{meal.nutritionPer100g.fat}g</span>
+            {[
+              { labelAr: "الدهون", labelEn: "Fats", key: "fat", max: 50, unit: "g" },
+              { labelAr: "السكريات", labelEn: "Sugars", key: "sugar", max: 30, unit: "g" },
+              { labelAr: "الصوديوم", labelEn: "Sodium", key: "sodium", max: 2000, unit: "mg" },
+              { labelAr: "السعرات", labelEn: "Calories", key: "calories", max: 800, unit: "kcal" },
+            ].map((item) => (
+              <div key={item.key} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-700">
+                    {lang === "ar" ? item.labelAr : item.labelEn}
+                  </span>
+                  <span className="text-lg font-bold text-gray-900">
+                    {meal.nutritionPer100g[item.key as keyof typeof meal.nutritionPer100g]}
+                    {item.unit}
+                  </span>
+                </div>
+                <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full ${getNutritionColor(item.key)} rounded-full`}
+                    style={{
+                      width: `${Math.min(
+                        (meal.nutritionPer100g[item.key as keyof typeof meal.nutritionPer100g] /
+                          item.max) *
+                          100,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
               </div>
-              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${getNutritionColor("fat")} rounded-full`}
-                  style={{ width: `${Math.min((meal.nutritionPer100g.fat / 50) * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Sugars */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-700">{lang === "ar" ? "السكريات" : "Sugars"}</span>
-                <span className="text-lg font-bold text-gray-900">{meal.nutritionPer100g.sugar}g</span>
-              </div>
-              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${getNutritionColor("sugar")} rounded-full`}
-                  style={{ width: `${Math.min((meal.nutritionPer100g.sugar / 30) * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Sodium */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-700">{lang === "ar" ? "الصوديوم" : "Sodium"}</span>
-                <span className="text-lg font-bold text-gray-900">{meal.nutritionPer100g.sodium}mg</span>
-              </div>
-              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${getNutritionColor("sodium")} rounded-full`}
-                  style={{ width: `${Math.min((meal.nutritionPer100g.sodium / 2000) * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Calories */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-lg font-semibold text-gray-700">{lang === "ar" ? "السعرات" : "Calories"}</span>
-                <span className="text-lg font-bold text-gray-900">{meal.nutritionPer100g.calories}kcal</span>
-              </div>
-              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className={`h-full ${getNutritionColor("calories")} rounded-full`}
-                  style={{ width: `${Math.min((meal.nutritionPer100g.calories / 800) * 100, 100)}%` }}
-                />
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* Potential Harms */}
           <div className="bg-rose-50 border-l-4 border-red-500 p-6 rounded-lg">
             <div className="flex items-start gap-3">
               <AlertTriangle className="w-6 h-6 text-yellow-600 flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-2 text-right">
+              <div className="flex-1 text-right">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
                   {lang === "ar" ? "⚠️ الأضرار المحتملة" : "⚠️ Potential Harms"}
                 </h3>
-                <p className="text-lg text-gray-800 leading-relaxed text-right">
+                <p className="text-lg text-gray-800 leading-relaxed">
                   {lang === "ar" ? meal.healthImpactAr : meal.healthImpactEn}
                 </p>
               </div>
@@ -187,11 +160,11 @@ export default function MealAnalysis({ meal, lang, onClose, isMuted }: MealAnaly
           <div className="bg-green-50 border-l-4 border-green-500 p-6 rounded-lg">
             <div className="flex items-start gap-3">
               <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-2 text-right">
+              <div className="flex-1 text-right">
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
                   {lang === "ar" ? "✓ بديل صحي" : "✓ Healthy Alternative"}
                 </h3>
-                <p className="text-lg text-gray-800 leading-relaxed text-right">
+                <p className="text-lg text-gray-800 leading-relaxed">
                   {lang === "ar" ? meal.alternativeAr : meal.alternativeEn}
                 </p>
               </div>
@@ -199,46 +172,46 @@ export default function MealAnalysis({ meal, lang, onClose, isMuted }: MealAnaly
           </div>
 
           {/* Health Index */}
-          <div className="bg-yellow-50 p-6 rounded-lg">
-            <div className="flex items-center gap-3">
-              <span className="text-3xl">{healthIndexStyle.icon}</span>
-              <div>
-                <h3 className="text-xl font-bold text-gray-900">{lang === "ar" ? "مؤشر الصحة:" : "Health Index:"}</h3>
-                <p className="text-lg text-gray-800">
-                  {meal.colorIndex === "red" && (lang === "ar" ? "يحتاج تحكم شديد" : "Needs strict control")}
-                  {meal.colorIndex === "yellow" && (lang === "ar" ? "يحتاج تحكم" : "Needs control")}
-                  {meal.colorIndex === "green" && (lang === "ar" ? "مقبول عموماً" : "Generally acceptable")}
-                </p>
-              </div>
+          <div className="bg-yellow-50 p-6 rounded-lg flex items-center gap-3">
+            <span className="text-3xl">{healthIndexStyle.icon}</span>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">
+                {lang === "ar" ? "مؤشر الصحة:" : "Health Index:"}
+              </h3>
+              <p className="text-lg text-gray-800">
+                {meal.colorIndex === "red" && (lang === "ar" ? "يحتاج تحكم شديد" : "Needs strict control")}
+                {meal.colorIndex === "yellow" && (lang === "ar" ? "يحتاج تحكم" : "Needs control")}
+                {meal.colorIndex === "green" && (lang === "ar" ? "مقبول عموماً" : "Generally acceptable")}
+              </p>
             </div>
           </div>
 
-          {/* QR Code Section - Shows when button is clicked */}
+          {/* QR Code Search Section */}
           {showQR && (
             <div className="flex flex-col items-center space-y-4 p-6 bg-white rounded-lg border-2 border-teal-200">
               <h3 className="text-xl font-bold text-gray-900">
-                {lang === "ar" ? "امسح الرمز لحفظ النصيحة" : "Scan to Save Advice"}
+                {lang === "ar" ? "امسح الرمز للبحث عن الوجبة" : "Scan to Search the Meal"}
               </h3>
               <div className="bg-white p-4 rounded-lg">
-                <QRCodeSVG value={qrContent} size={250} />
+                <QRCodeSVG value={`https://www.google.com/search?q=${meal.nameAr}`} size={250} />
               </div>
             </div>
           )}
 
-          {/* Action Buttons - moved down with more spacing */}
+          {/* Buttons */}
           <div className="space-y-4 pt-8">
             <Button
-              onClick={handleShowAdvice}
+              onClick={handleShowSearch}
               className="w-full bg-purple-500 hover:bg-purple-600 text-white text-xl py-7 rounded-xl font-bold"
             >
               <QrCode className="w-6 h-6 ml-2" />
               {showQR
                 ? lang === "ar"
-                  ? "إخفاء النصيحة"
-                  : "Hide Advice"
+                  ? "إخفاء البحث"
+                  : "Hide Search"
                 : lang === "ar"
-                  ? "اعرض النصيحة"
-                  : "Show Advice"}
+                  ? "ابحث عن الوجبة أكثر"
+                  : "Search More About Meal"}
             </Button>
 
             <Button
